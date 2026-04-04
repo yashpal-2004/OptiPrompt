@@ -1,0 +1,115 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: {userId} (Firebase Auth UID)
+// Fields:
+//   - uid: string (required) - Firebase Auth UID
+//   - email: string (required) - User email
+//   - displayName: string (optional) - User display name
+//   - role: string (required, enum: ['admin', 'user']) - User role
+//   - createdAt: timestamp (required) - Account creation timestamp
+//
+// Collection: usageLogs
+// Document ID: {logId} (Auto-generated)
+// Fields:
+//   - uid: string (required) - User UID
+//   - originalPrompt: string (required) - Original user prompt
+//   - optimizedPrompt: string (required) - Optimized prompt
+//   - originalTokens: number (optional) - Tokens in original prompt
+//   - optimizedTokens: number (optional) - Tokens in optimized prompt
+//   - tokensSaved: number (optional) - Tokens saved
+//   - optimizedCost: number (optional) - Cost of optimized prompt
+//   - costSaved: number (optional) - Estimated cost saved
+//   - mode: string (optional, enum: ['cheap', 'quality']) - Optimization mode
+//   - model: string (optional) - Model used
+//   - timestamp: timestamp (required) - When the optimization occurred
+//
+// Collection: analytics
+// Document ID: {userId} (Firebase Auth UID)
+// Fields:
+//   - uid: string (required) - User UID
+//   - totalTokensSaved: number (required) - Total tokens saved
+//   - totalCostSaved: number (required) - Total cost saved
+//   - lastUpdated: timestamp (optional) - Last update timestamp
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function isNewDocOwner() {
+      return isAuthenticated() && request.auth.uid == request.resource.data.uid;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid == request.auth.uid &&
+             data.role in ['user', 'admin'] &&
+             data.email is string && data.email.size() > 0;
+    }
+
+    function isValidUsageLog(data) {
+      return data.keys().hasAll(['uid', 'originalPrompt', 'optimizedPrompt', 'timestamp']) &&
+             data.uid == request.auth.uid &&
+             data.originalPrompt is string && data.originalPrompt.size() < 10000 &&
+             data.optimizedPrompt is string && data.optimizedPrompt.size() < 10000;
+    }
+
+    function isValidAnalytics(data) {
+      return data.keys().hasAll(['uid', 'totalTokensSaved', 'totalCostSaved']) &&
+             data.uid == request.auth.uid &&
+             data.totalTokensSaved is number &&
+             data.totalCostSaved is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      request.resource.data.role == resource.data.role; // Prevent self-promotion
+      allow delete: if false; // Users cannot delete their profiles
+    }
+
+    match /usageLogs/{logId} {
+      allow read: if isDocOwner();
+      allow create: if isNewDocOwner() && isValidUsageLog(request.resource.data);
+      allow update: if isDocOwner() && isNewDocOwner() && isValidUsageLog(request.resource.data);
+      allow delete: if isDocOwner();
+    }
+
+    match /analytics/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidAnalytics(request.resource.data);
+      allow update: if isOwner(userId) && isValidAnalytics(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

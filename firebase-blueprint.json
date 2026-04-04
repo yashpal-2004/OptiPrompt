@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email", "description": "User email" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "User role" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" }
+      },
+      "required": ["uid", "email"]
+    },
+    "UsageLog": {
+      "title": "UsageLog",
+      "description": "Log of prompt optimization and usage",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User UID" },
+        "originalPrompt": { "type": "string", "description": "Original user prompt" },
+        "optimizedPrompt": { "type": "string", "description": "Optimized prompt" },
+        "originalTokens": { "type": "number", "description": "Tokens in original prompt" },
+        "optimizedTokens": { "type": "number", "description": "Tokens in optimized prompt" },
+        "costSaved": { "type": "number", "description": "Estimated cost saved in USD" },
+        "mode": { "type": "string", "enum": ["cheap", "quality"], "description": "Optimization mode" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the optimization occurred" }
+      },
+      "required": ["uid", "originalPrompt", "optimizedPrompt", "timestamp"]
+    },
+    "Analytics": {
+      "title": "Analytics",
+      "description": "Aggregated analytics for a user",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User UID" },
+        "totalTokensSaved": { "type": "number", "description": "Total tokens saved across all requests" },
+        "totalCostSaved": { "type": "number", "description": "Total cost saved across all requests" },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "Last time analytics were updated" }
+      },
+      "required": ["uid", "totalTokensSaved", "totalCostSaved"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document"
+    },
+    "/usageLogs/{logId}": {
+      "schema": "UsageLog",
+      "description": "Individual usage logs"
+    },
+    "/analytics/{userId}": {
+      "schema": "Analytics",
+      "description": "Aggregated analytics for a user"
+    }
+  }
+}
