@@ -69,6 +69,20 @@ function getNextApiKey() {
 // Simple in-memory cache to avoid redundant API calls
 const optimizationCache = new Map<string, string>();
 
+function preOptimizePrompt(prompt: string): string {
+  const fillers = ['please', 'kindly', 'could you', 'would you', 'i would like to', 'can you help me with'];
+  let optimized = prompt.toLowerCase();
+  fillers.forEach(f => {
+    optimized = optimized.replace(new RegExp(`\\b${f}\\b`, 'gi'), '');
+  });
+  optimized = optimized.trim().replace(/\s+/g, ' ');
+
+  if (optimized.length < 20 && !optimized.includes(':')) {
+    return `Task: ${optimized}\nFormat: 3 bullet points\nConstraints: Under 100 words`;
+  }
+  return optimized;
+}
+
 export function PromptTester({ 
   onOptimize 
 }: { 
@@ -115,13 +129,7 @@ export function PromptTester({
     // We need the pre-optimized prompt again. 
     // Let's just re-run the whole thing for this model.
     try {
-      const preResponse = await fetch('/api/optimize/pre', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: originalPrompt }),
-      });
-      const preData = await preResponse.json();
-      const preOptimized = preData.preOptimizedPrompt;
+      const preOptimized = preOptimizePrompt(originalPrompt);
 
       const optimized = await llmOptimize(preOptimized, mode, modelId);
       if (!optimized) return; // Quota still exceeded
@@ -247,14 +255,8 @@ export function PromptTester({
     if (!prompt.trim()) return;
     setLoading(true);
     try {
-      // 1. Get rule-based and template optimization from backend
-      const preResponse = await fetch('/api/optimize/pre', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      const preData = await preResponse.json();
-      const preOptimized = preData.preOptimizedPrompt;
+      // 1. Get rule-based and template optimization locally
+      const preOptimized = preOptimizePrompt(prompt);
 
       // 2. Run optimization for all models with increased staggered delay
       const modelIds = Object.keys(MODEL_PRICING);
