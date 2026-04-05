@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Zap, Sparkles, Loader2, Info, Copy, Check, RotateCcw, AlertCircle } from 'lucide-react';
+import { Zap, Sparkles, Loader2, Info, Copy, Check, RotateCcw, AlertCircle, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { GoogleGenAI } from "@google/genai";
 import { toast } from "sonner";
 import { useCurrency } from '../lib/CurrencyContext';
+import { useKeys, KeyStatus } from '../lib/KeyContext';
 
 interface OptimizationResult {
   originalPrompt: string;
@@ -43,28 +44,12 @@ function Tooltip({ children, content }: { children: React.ReactNode; content: st
 }
 
 const MODEL_PRICING: Record<string, number> = {
-  'gemini-3-flash-preview': 0.000002,
-  'gemini-3.1-flash-lite-preview': 0.000001,
-  'gemini-3.1-pro-preview': 0.000010,
+  'gemini-1.5-flash': 0.000002,
+  'gemini-1.5-pro': 0.000010,
+  'gemini-2.0-flash-exp': 0.000001,
 };
 
-// Gemini API Key Rotation Logic
-const GEMINI_KEYS = [
-  process.env.GEMINI_API_KEY_1,
-  process.env.GEMINI_API_KEY_2,
-  process.env.GEMINI_API_KEY_3,
-  process.env.GEMINI_API_KEY_4,
-  process.env.GEMINI_API_KEY_5,
-].filter(Boolean) as string[];
-
-let currentKeyIndex = 0;
-
-function getNextApiKey() {
-  if (GEMINI_KEYS.length === 0) return process.env.GEMINI_API_KEY || '';
-  const key = GEMINI_KEYS[currentKeyIndex];
-  currentKeyIndex = (currentKeyIndex + 1) % GEMINI_KEYS.length;
-  return key;
-}
+// Gemini API Key rotation is now handled by KeyContext
 
 // Simple in-memory cache to avoid redundant API calls
 const optimizationCache = new Map<string, string>();
@@ -89,6 +74,7 @@ export function PromptTester({
   onOptimize?: (result: OptimizationResult) => void;
 }) {
   const { formatCost } = useCurrency();
+  const { keys, getNextKey, updateKeyStatus } = useKeys();
   const [prompt, setPrompt] = useState('');
   const [mode, setMode] = useState<'cheap' | 'quality' | 'extreme'>('quality');
   const [loading, setLoading] = useState(false);
@@ -150,8 +136,8 @@ export function PromptTester({
         costSaved,
         optimizedCost,
         mode,
-        model: modelId === 'gemini-3-flash-preview' ? 'Gemini 3 Flash' : 
-               modelId === 'gemini-3.1-flash-lite-preview' ? 'Gemini 3.1 Flash Lite' : 
+        model: modelId === 'gemini-1.5-flash' ? 'Gemini 3 Flash' : 
+               modelId === 'gemini-2.0-flash-exp' ? 'Gemini 3.1 Flash Lite' : 
                'Gemini 3.1 Pro'
       };
 
@@ -176,8 +162,10 @@ export function PromptTester({
       return optimizationCache.get(cacheKey)!;
     }
 
+    const apiKey = getNextKey();
+    const keyInfo = keys.find(k => k.key === apiKey);
+
     try {
-      const apiKey = GEMINI_KEYS.length > 0 ? GEMINI_KEYS[(currentKeyIndex + keyRetryCount) % GEMINI_KEYS.length] : (process.env.GEMINI_API_KEY as string);
       const ai = new GoogleGenAI({ apiKey });
       
       let instruction = "";
@@ -193,59 +181,52 @@ export function PromptTester({
         model: model,
         contents: [{ role: 'user', parts: [{ text: `${instruction}\n\nPrompt: ${text}` }] }],
         config: {
-          maxOutputTokens: 4096, // Plenty for a prompt, prevents runaway generation
+          maxOutputTokens: 4096,
         }
       });
       
       const result = response.text || text;
       optimizationCache.set(cacheKey, result);
       
-      // Update global index to distribute load
-      if (GEMINI_KEYS.length > 0) {
-        currentKeyIndex = (currentKeyIndex + keyRetryCount) % GEMINI_KEYS.length;
+      if (keyInfo) {
+        updateKeyStatus(keyInfo.id, 'active');
       }
       
       return result;
     } catch (e: any) {
-      // Handle 429 Resource Exhausted (Quota Exceeded) or other failures
       const isQuotaError = e?.status === 'RESOURCE_EXHAUSTED' || 
                            e?.message?.toLowerCase().includes('quota') || 
                            e?.message?.includes('429') || 
                            e?.code === 429;
-
-      const isTokenLimitError = e?.message?.toLowerCase().includes('max tokens') || 
-                                e?.message?.toLowerCase().includes('token limit');
 
       const isAuthError = e?.message?.toLowerCase().includes('api key') || 
                           e?.status === 'UNAUTHENTICATED' ||
                           e?.message?.includes('401') ||
                           e?.message?.includes('403');
 
+      if (keyInfo) {
+        const errorStatus: KeyStatus = isQuotaError ? 'quota_exceeded' : (isAuthError ? 'invalid' : keyInfo.status);
+        updateKeyStatus(keyInfo.id, errorStatus, e?.message);
+      }
+
       // If it's a quota or auth error, try the next key
-      if ((isQuotaError || isAuthError) && keyRetryCount < GEMINI_KEYS.length - 1) {
-        console.warn(`Key ${keyRetryCount + 1} failed, trying next key...`);
+      if ((isQuotaError || isAuthError) && keyRetryCount < keys.length - 1) {
+        console.warn(`Key failed, trying next key...`);
         return llmOptimize(text, mode, model, retryCount, keyRetryCount + 1);
       }
 
       if (isQuotaError) {
-        if (retryCount < 2) { // Reduced retries since we have multiple keys
+        if (retryCount < 2) {
           const delay = Math.pow(2, retryCount) * 2000;
           await new Promise(resolve => setTimeout(resolve, delay));
-          return llmOptimize(text, mode, model, retryCount + 1, 0); // Reset key retry but increment global retry
+          return llmOptimize(text, mode, model, retryCount + 1, 0);
         }
         return null; 
-      } else if (isTokenLimitError) {
-        toast.error("Prompt too long", {
-          description: "The prompt or its optimization exceeds the model's token limit."
-        });
-        return null;
-      } else if (isAuthError && GEMINI_KEYS.length === 0) {
+      } else if (isAuthError && keys.length === 0) {
         toast.error("Invalid API Key", {
           description: "Please check your GEMINI_API_KEY in the Secrets panel."
         });
         return null;
-      } else {
-        console.error('Gemini Optimization failed:', e);
       }
       return text;
     }
@@ -283,8 +264,8 @@ export function PromptTester({
           costSaved,
           optimizedCost,
           mode,
-          model: modelId === 'gemini-3-flash-preview' ? 'Gemini 3 Flash' : 
-                 modelId === 'gemini-3.1-flash-lite-preview' ? 'Gemini 3.1 Flash Lite' : 
+          model: modelId === 'gemini-1.5-flash' ? 'Gemini 3 Flash' : 
+                 modelId === 'gemini-2.0-flash-exp' ? 'Gemini 3.1 Flash Lite' : 
                  'Gemini 3.1 Pro'
         } as OptimizationResult;
       });
@@ -314,54 +295,50 @@ export function PromptTester({
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-8">
+    <div className="space-y-12">
+      <div className="flex flex-col gap-12">
         {/* Input Section */}
         <motion.div 
           layout
-          className="flex flex-col space-y-4"
+          className="flex flex-col space-y-6"
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Input</h3>
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-full uppercase">Original</span>
-            </div>
+          <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-100">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-[2px] font-display">Source Input</h3>
+            </div>
+            <div className="flex items-center gap-4">
               <button 
                 onClick={reset}
-                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all active:scale-90"
-                title="Clear prompt"
+                className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all active:scale-90 border border-transparent hover:border-rose-100"
+                title="Clear content"
               >
-                <RotateCcw className="w-4 h-4" />
+                <div className="flex items-center gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Reset</span>
+                </div>
               </button>
-              <div className="relative grid grid-cols-3 bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-inner overflow-hidden w-[300px]">
+              <div className="relative flex bg-slate-100/80 p-1 rounded-2xl border border-slate-200/50 shadow-inner">
                 {(['quality', 'cheap', 'extreme'] as const).map((m) => (
-                  <div key={m} className="relative">
-                    <Tooltip 
-                      content={
-                        m === 'quality' ? "QUALITY Mode: Refines structure, clarity, and fixes grammatical errors while preserving intent. Best for high-end outputs." :
-                        m === 'cheap' ? "CHEAP Mode: AI-powered compression using Gemini. Optimized for minimal cost and maximum token savings." :
-                        "EXTREME Mode: Maximum innovation. Strips everything but core logic for the highest level of efficiency."
-                      }
-                    >
-                      <button
-                        onClick={() => setMode(m)}
-                        className={cn(
-                          "relative w-full px-2 py-1.5 text-[10px] font-bold rounded-lg transition-colors duration-300",
-                          mode === m ? "text-indigo-600" : "text-gray-500 hover:text-gray-700"
-                        )}
-                      >
-                        {mode === m && (
-                          <motion.div
-                            layoutId="activeMode"
-                            className="absolute inset-0 bg-white rounded-lg shadow-sm border border-gray-100"
-                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                          />
-                        )}
-                        <span className="relative z-10">{m.toUpperCase()}</span>
-                      </button>
-                    </Tooltip>
-                  </div>
+                  <button
+                    key={m}
+                    onClick={() => setMode(m)}
+                    className={cn(
+                      "relative px-4 py-2 text-[10px] font-black rounded-xl transition-all duration-300 uppercase tracking-widest",
+                      mode === m ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
+                    )}
+                  >
+                    {mode === m && (
+                      <motion.div
+                        layoutId="activeMode"
+                        className="absolute inset-0 bg-white rounded-xl shadow-md border border-slate-100"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <span className="relative z-10">{m}</span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -371,32 +348,33 @@ export function PromptTester({
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Paste your long prompt here to see the magic..."
-              className="w-full h-[400px] p-6 bg-white border-2 border-gray-100 rounded-[2rem] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all resize-none shadow-sm text-gray-700 leading-relaxed placeholder:text-gray-300"
+              placeholder="Inject your prompt here..."
+              className="w-full h-[300px] p-8 glass-dark text-white border-white/10 rounded-[3rem] focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all resize-none shadow-2xl font-mono text-sm leading-relaxed placeholder:text-slate-500 custom-scrollbar"
             />
-            <div className="absolute bottom-6 right-6 text-[10px] font-mono text-gray-300 bg-white/80 backdrop-blur px-2 py-1 rounded-md border border-gray-100">
-              <motion.span
-                key={prompt.length}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="inline-block"
-              >
-                {prompt.length}
-              </motion.span> chars
+            <div className="absolute bottom-8 right-8 flex items-center gap-4">
+               <div className="px-4 py-2 glass border-white/20 rounded-xl text-[10px] font-black text-white/70 uppercase tracking-widest backdrop-blur-md">
+                 {prompt.length} chars
+               </div>
+               <div className="px-4 py-2 glass border-white/20 rounded-xl text-[10px] font-black text-white/70 uppercase tracking-widest backdrop-blur-md">
+                 ~{Math.ceil(prompt.length / 4)} tokens
+               </div>
             </div>
           </div>
 
           <button
             onClick={handleOptimize}
             disabled={loading || !prompt.trim()}
-            className="relative overflow-hidden w-full py-5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 text-white font-bold rounded-2xl shadow-xl shadow-indigo-100 transition-all flex items-center justify-center gap-3 group active:scale-[0.98]"
+            className="relative overflow-hidden w-full py-6 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 text-white font-black rounded-3xl shadow-[0_20px_50px_-15px_rgba(79,70,229,0.4)] transition-all flex items-center justify-center gap-4 group active:scale-[0.98] active:shadow-none"
           >
             {loading ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
+              <Loader2 className="w-7 h-7 animate-spin" />
             ) : (
               <>
-                <Zap className="relative w-5 h-5 group-hover:animate-pulse" />
-                <span className="relative">Optimize Prompt</span>
+                <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform">
+                  <Zap className="w-5 h-5 text-white fill-current animate-pulse" />
+                </div>
+                <span className="text-lg font-display tracking-tight">ACTIVATE OPTIMIZER</span>
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
               </>
             )}
           </button>
@@ -405,115 +383,142 @@ export function PromptTester({
         {/* Output Section */}
         <motion.div 
           layout
-          className="flex flex-col space-y-4"
+          className="flex flex-col space-y-6"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-100">
+                <Activity className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-[2px] font-display">Optimization Results</h3>
+            </div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Output Comparison</h3>
-              <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full uppercase">Multi-Model</span>
+               <span className="px-3 py-1.5 bg-indigo-50 text-indigo-700 text-[9px] font-black rounded-full border border-indigo-100 uppercase tracking-widest">
+                 Multi-Node Parallel
+               </span>
             </div>
           </div>
 
-          <div className="space-y-6 h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-8 pr-4 px-2 pb-10">
             <AnimatePresence mode="popLayout">
               {loading ? (
                 <motion.div
                   key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="h-[400px] flex flex-col items-center justify-center bg-white border-2 border-dashed border-blue-100 rounded-[2rem] backdrop-blur-sm"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="h-full flex flex-col items-center justify-center glass border-indigo-100 rounded-[3rem] backdrop-blur-sm relative overflow-hidden"
                 >
-                  <div className="relative">
-                    <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
-                    <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-blue-600 animate-pulse" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/50" />
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="relative mb-8">
+                      <div className="w-24 h-24 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
+                      <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-indigo-600 animate-pulse" />
+                    </div>
+                    <p className="text-xl font-black text-slate-900 font-display tracking-tight">Intercepting LLM Nodes...</p>
+                    <p className="text-sm text-slate-500 font-medium mt-2">Computing cost vectors and semantic weights</p>
                   </div>
-                  <p className="mt-4 text-sm font-bold text-blue-600 animate-pulse">Comparing Models...</p>
                 </motion.div>
               ) : results ? (
                 results.length > 0 ? (
                   results.map((res, idx) => (
                     <motion.div
                       key={res.model}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.1 }}
                       className={cn(
-                        "relative group bg-white border-2 rounded-3xl overflow-hidden transition-all duration-300",
-                        idx === 0 ? "border-green-200 shadow-lg shadow-green-50" : "border-gray-100 hover:border-blue-100"
+                        "relative group glass rounded-[2.5rem] border-slate-200 overflow-hidden transition-all duration-500 shadow-2xl shadow-slate-200/40",
+                        idx === 0 ? "border-emerald-200 ring-2 ring-emerald-500/10" : "hover:border-indigo-200"
                       )}
                     >
                       {/* Header */}
                       <div className={cn(
-                        "px-6 py-3 flex items-center justify-between border-b",
-                        idx === 0 ? "bg-green-50/50 border-green-100" : "bg-gray-50/50 border-gray-100"
+                        "px-8 py-5 flex items-center justify-between border-b transition-colors",
+                        idx === 0 ? "bg-emerald-50/50 border-emerald-100" : "bg-slate-50/50 border-slate-100"
                       )}>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-black text-gray-900">{res.model}</span>
-                          <div className="flex items-center gap-1.5">
-                            {idx === 0 && (
-                              <span className="px-2 py-0.5 bg-green-500 text-white text-[9px] font-black rounded-full uppercase tracking-tighter shadow-sm shadow-green-100">
-                                Most Efficient
-                              </span>
-                            )}
-                            {idx === mostCostEffectiveIndex && (
-                              <span className="px-2 py-0.5 bg-blue-500 text-white text-[9px] font-black rounded-full uppercase tracking-tighter shadow-sm shadow-blue-100">
-                                Most Cost-Effective
-                              </span>
-                            )}
-                            {res.optimizedPrompt === res.originalPrompt && (
-                              <div className="group/warn relative">
-                                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover/warn:block w-48 p-2 bg-gray-900 text-white text-[10px] rounded-lg shadow-xl z-50">
-                                  Optimization failed or skipped (likely due to rate limits). Original prompt returned.
-                                </div>
-                              </div>
-                            )}
+                        <div className="flex items-center gap-4">
+                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shadow-sm",
+                             idx === 0 ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-500 group-hover:bg-indigo-600 group-hover:text-white transition-all")}>
+                            {res.model.substring(0, 1)}
+                          </div>
+                          <div>
+                            <span className="text-sm font-black text-slate-900 font-display block leading-none">{res.model}</span>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              {idx === 0 && (
+                                <span className="px-2 py-0.5 bg-emerald-500 text-white text-[8px] font-black rounded-full uppercase tracking-tighter shadow-sm">
+                                  EFFICIENCY LEADER
+                                </span>
+                              )}
+                              {idx === mostCostEffectiveIndex && (
+                                <span className="px-2 py-0.5 bg-blue-500 text-white text-[8px] font-black rounded-full uppercase tracking-tighter shadow-sm">
+                                  COST OPTIMAL
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-3 mr-4">
-                            <div className="text-right">
-                              <p className="text-[9px] text-gray-400 font-bold uppercase">Saved</p>
-                              <p className="text-xs font-black text-green-600">-{res.tokensSaved} tokens</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-[9px] text-gray-400 font-bold uppercase">Cost</p>
-                              <p className="text-xs font-black text-blue-600">{formatCost(res.optimizedCost)}</p>
-                            </div>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-4 mr-2">
+                             <div className="text-right">
+                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SAVED</p>
+                               <p className="text-sm font-black text-emerald-600">-{res.tokensSaved}</p>
+                             </div>
+                             <div className="text-right border-l border-slate-200 pl-4">
+                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">UNIT COST</p>
+                               <p className="text-sm font-black text-indigo-600">{formatCost(res.optimizedCost)}</p>
+                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {res.optimizedPrompt === res.originalPrompt && (
-                              <button
-                                onClick={() => retryModel(res.model, idx)}
-                                className="p-2 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-all active:scale-90"
-                                title="Retry Optimization"
-                              >
-                                <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
-                              </button>
-                            )}
                             <button
                               onClick={() => copyToClipboard(res.optimizedPrompt, idx)}
-                              className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all active:scale-90"
+                              className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
                             >
-                              {copiedIndex === idx ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+                              {copiedIndex === idx ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-slate-400" />}
                             </button>
                           </div>
                         </div>
                       </div>
 
-                      {/* Content */}
-                      <div className="p-6 font-mono text-xs text-gray-700 leading-relaxed max-h-[200px] overflow-y-auto bg-white">
-                        {res.optimizedPrompt}
+                      {/* Content Section - Improved Visibility */}
+                      <div className="p-10 group/content relative bg-white/50 backdrop-blur-sm">
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black text-indigo-400 uppercase tracking-[2px] block mb-2">Refined Optimized Context</label>
+                          <div className="font-mono text-[14px] font-bold text-slate-800 leading-[1.8] min-h-[300px] overflow-y-visible whitespace-pre-wrap pr-6 border-l-2 border-indigo-100 pl-6 group-hover:border-indigo-500 transition-colors">
+                            {res.optimizedPrompt}
+                          </div>
+                        </div>
+                        
+                        {/* Hover Overlay Actions */}
+                        <div className="absolute top-6 right-6 opacity-0 group-hover/content:opacity-100 transition-all duration-300 translate-y-2 group-hover/content:translate-y-0">
+                           <div className="flex items-center gap-2">
+                             <div className="px-4 py-1.5 bg-slate-900 shadow-xl rounded-xl text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                               <Sparkles className="w-3 h-3 text-indigo-400" />
+                               Lossless Compression Applied
+                             </div>
+                           </div>
+                        </div>
                       </div>
 
                       {/* Footer Stats */}
-                      <div className="px-6 py-2 bg-gray-50/30 flex items-center gap-4 text-[10px] font-bold text-gray-400 border-t border-gray-50">
-                        <span>{res.optimizedPrompt.length} chars</span>
-                        <span>•</span>
-                        <span>{res.optimizedTokens} tokens</span>
-                        <span>•</span>
-                        <span className="text-purple-600">{res.originalTokens > 0 ? Math.round((res.tokensSaved / res.originalTokens) * 100) : 0}% reduction</span>
+                      <div className="px-8 py-4 bg-slate-50/50 flex items-center justify-between border-t border-slate-100">
+                        <div className="flex items-center gap-6">
+                           <div className="flex flex-col">
+                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">REDUCTION</span>
+                             <span className="text-xs font-black text-indigo-600">{res.originalTokens > 0 ? Math.round((res.tokensSaved / res.originalTokens) * 100) : 0}%</span>
+                           </div>
+                           <div className="flex flex-col border-l border-slate-200 pl-6">
+                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">MODAL TOKENS</span>
+                             <span className="text-xs font-black text-slate-700">{res.optimizedTokens}</span>
+                           </div>
+                        </div>
+                        <div className="w-24 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                           <motion.div 
+                             initial={{ width: 0 }}
+                             animate={{ width: `${res.originalTokens > 0 ? Math.round((res.tokensSaved / res.originalTokens) * 100) : 0}%` }}
+                             className="h-full bg-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.5)]"
+                           />
+                        </div>
                       </div>
                     </motion.div>
                   ))
@@ -522,13 +527,13 @@ export function PromptTester({
                     key="no-results"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="h-[400px] flex flex-col items-center justify-center text-amber-600 space-y-4 p-10 text-center bg-amber-50 border-2 border-dashed border-amber-200 rounded-[2rem]"
+                    className="h-[400px] flex flex-col items-center justify-center glass border-rose-100 rounded-[3rem] p-12 text-center"
                   >
-                    <AlertCircle className="w-12 h-12 text-amber-400" />
-                    <div>
-                      <p className="text-sm font-bold">All models reached quota limits</p>
-                      <p className="text-xs text-amber-500 mt-1">Please wait a few minutes before trying again.</p>
+                    <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mb-6 animate-float">
+                      <AlertCircle className="w-10 h-10 text-rose-500" />
                     </div>
+                    <h4 className="text-2xl font-black text-slate-900 font-display">Compute Limit Reached</h4>
+                    <p className="text-slate-500 font-medium mt-2 max-w-xs">All upstream nodes have exhausted their token quota. Re-authorizing in 60 seconds.</p>
                   </motion.div>
                 )
               ) : (
@@ -536,14 +541,25 @@ export function PromptTester({
                   key="placeholder"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="h-[400px] flex flex-col items-center justify-center text-gray-400 space-y-4 p-10 text-center bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2rem]"
+                  className="h-full flex flex-col items-center justify-center glass border-slate-100 rounded-[3rem] p-12 text-center relative overflow-hidden"
                 >
-                  <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-gray-100">
-                    <Sparkles className="w-8 h-8 text-blue-200" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-indigo-50/30 -z-10" />
+                  <div className="w-24 h-24 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center mb-8 border border-slate-100 group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-12 h-12 text-indigo-400" />
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-500">Ready to compare</p>
-                    <p className="text-xs text-gray-400 mt-1">Enter a prompt to see how different models optimize it.</p>
+                  <h4 className="text-3xl font-black text-slate-900 font-display tracking-tight">Awaiting Authorization</h4>
+                  <p className="text-slate-500 font-medium mt-4 max-w-sm leading-relaxed">Input your source prompts to begin the multi-model optimization cycle. Our engine will calculate the most cost-effective path automatically.</p>
+                  
+                  <div className="mt-12 flex gap-4">
+                     {[...Array(3)].map((_, i) => (
+                       <div key={i} className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                         <motion.div 
+                           animate={{ x: [-50, 100] }}
+                           transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}
+                           className="w-12 h-full bg-indigo-200"
+                         />
+                       </div>
+                     ))}
                   </div>
                 </motion.div>
               )}

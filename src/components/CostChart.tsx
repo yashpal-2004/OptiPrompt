@@ -42,7 +42,7 @@ export function CostChart({ history }: CostChartProps) {
   return (
     <div className="h-[300px] w-full bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
       <h3 className="text-sm font-medium text-gray-500 mb-6 uppercase tracking-wider">Token Usage Over Time</h3>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <AreaChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
           <XAxis 

@@ -9,8 +9,12 @@ import { Settings } from './components/Settings';
 import { Documentation } from './components/Documentation';
 import { ApiReference } from './components/ApiReference';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
+import { SafetyGuides } from './components/SafetyGuides';
+import { TermsOfUse } from './components/TermsOfUse';
+import { Status } from './components/Status';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { CurrencyProvider } from './lib/CurrencyContext';
+import { KeyProvider } from './lib/KeyContext';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -55,6 +59,18 @@ function AppContent() {
             element={<PrivacyPolicy />} 
           />
           <Route 
+            path="/safety" 
+            element={<SafetyGuides />} 
+          />
+          <Route 
+            path="/terms" 
+            element={<TermsOfUse />} 
+          />
+          <Route 
+            path="/status" 
+            element={<Status />} 
+          />
+          <Route 
             path="*" 
             element={<Navigate to="/" />} 
           />
@@ -70,7 +86,9 @@ export default function App() {
     <Router>
       <AuthProvider>
         <CurrencyProvider>
-          <AppContent />
+          <KeyProvider>
+            <AppContent />
+          </KeyProvider>
         </CurrencyProvider>
       </AuthProvider>
     </Router>

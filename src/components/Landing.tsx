@@ -199,16 +199,18 @@ export function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-gray-400">
+      <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-gray-100 flex flex-col items-center justify-between gap-6 text-sm text-gray-400 sm:flex-row">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4" />
           <span>© 2026 OptiPrompt. All rights reserved.</span>
         </div>
-        <div className="flex items-center gap-8">
+        <div className="flex flex-wrap items-center justify-center gap-6 sm:justify-end">
           <Link to="/docs" className="hover:text-gray-600 transition-colors">Documentation</Link>
-          <Link to="/api-ref" className="hover:text-gray-600 transition-colors">API Reference</Link>
-          <Link to="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</Link>
+          <Link to="/api-ref" className="hover:text-gray-600 transition-colors">API</Link>
+          <Link to="/safety" className="hover:text-gray-600 transition-colors">Safety</Link>
+          <Link to="/privacy" className="hover:text-gray-600 transition-colors">Privacy</Link>
+          <Link to="/terms" className="hover:text-gray-600 transition-colors">Terms</Link>
+          <Link to="/status" className="hover:text-gray-600 transition-colors">Status</Link>
         </div>
       </footer>
     </div>
