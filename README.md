@@ -1,66 +1,78 @@
 # OptiPrompt 🚀
 
-OptiPrompt is a high-performance, production-ready toolkit designed to help developers and businesses reduce AI costs by up to 80% through intelligent prompt optimization and real-time token tracking.
+**OptiPrompt** is a state-of-the-art neural workspace designed to architect, optimize, and scale your LLM interactions. By leveraging advanced 6-stage compression algorithms and high-fidelity logical refinement, OptiPrompt reduces token overhead by up to 80% while enhancing instruction clarity.
 
-![OptiPrompt Branding](https://picsum.photos/seed/optiprompt/1200/400)
+![OptiPrompt Neural Dashboard](https://picsum.photos/seed/optiprompt/1200/400)
 
-## ✨ Key Features
+## ✨ Neural Optimization Core
 
-- **Triple Optimization Modes**:
-  - **CHEAP**: Aggressive AI-powered compression for maximum token savings.
-  - **QUALITY**: Balanced refinement focusing on clarity, structure, and grammar.
-  - **EXTREME**: Experimental refactoring for maximum logic density and efficiency.
-- **Multi-Model Comparison**: Simultaneously optimize and compare results across different Gemini models:
-  - **Gemini 3 Flash**
-  - **Gemini 3.1 Pro**
-  - **Gemini 3.1 Flash Lite**
-- **High Availability**: Automatic rotation across 5 Gemini API keys to ensure 100% uptime and bypass rate limits.
-- **Real-time Analytics**: Detailed dashboards tracking token usage, cost savings (in ₹ INR), and model distribution.
-- **Cloud Sync**: Persistent history and settings powered by Firebase.
-- **Premium UI**: Modern, responsive interface built with Tailwind CSS and smooth `motion` animations.
+OptiPrompt goes beyond simple prompting. It utilizes a sophisticated multi-stage pipeline to re-engineer instructions for maximum performance:
 
-## 🛠️ Tech Stack
+- **Stage 1: Rule Cleaner** — Eliminates linguistic filler and social padding.
+- **Stage 2: Context Reducer** — Strips redundant preambles while preserving technical context.
+- **Stage 3: Template Formatter** — Automatically structures prompts based on intent (Code, Logic, Creative).
+- **Stage 4: Output Controller** — Enforces token-efficient response constraints.
+- **Stage 5: Neural Cache** — Instant retrieval for repeated prompt patterns (Zero Latency).
+- **Stage 6: LLM Compressor** — Semantic refactoring via Groq-powered Llama-3.3-70B.
 
-- **Frontend**: React 18, Vite, Tailwind CSS, Lucide React, Motion.
-- **Backend**: Node.js, Express (API Proxy and pre-optimization logic).
-- **Database & Auth**: Firebase Firestore, Firebase Authentication.
-- **AI SDKs**: `@google/genai`.
+## 💎 Premium Features
 
-## 🚀 Getting Started
+- **Tiered Compression Modes**:
+  - **CHEAP**: Aggressive token reduction for cost-sensitive high-volume tasks.
+  - **QUALITY**: High-fidelity refinement focusing on logic, structure, and professional tone.
+  - **EXTREME**: Telegraphic refactoring for maximum density and minimum token footprint.
+- **Dual-Node Failover**: Industrial-grade reliability with automatic rotation between primary and secondary Groq nodes.
+- **Refinement Yield Metrics**: Advanced analytics that credit quality-mode logic enhancement even when token expansion occurs.
+- **Real-time Telemetry**: Monitoring of latency, API spend, and compression efficiency across all neural sessions.
+- **Enterprise UI**: A luxury-tech aesthetic featuring glassmorphic effects, fluid animations (`motion/react`), and deep responsive layouts.
+
+## 🛠️ Performance Stack
+
+- **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Compute**: [Groq](https://groq.com/) (Llama-3.3-70B-Versatile)
+- **Persistence**: [Firebase Firestore](https://firebase.google.com/)
+- **Identity**: [Firebase Auth](https://firebase.google.com/)
+- **Visuals**: [Tailwind CSS 4.0](https://tailwindcss.com/) + [Framer Motion](https://framer.com/motion)
+- **Analytics**: [Recharts](https://recharts.org/)
+
+## 🚀 Neural Deployment
 
 ### Prerequisites
-
 - Node.js 18+
-- 5x Google Gemini API Keys (for rotation)
+- [Groq API Keys](https://console.groq.com/) (Recommend 2 keys for failover support)
 
 ### Installation
-
-1. Clone the repository
+1. Clone the workspace:
+   ```bash
+   git clone https://github.com/yashpal-2004/optiprompt.git
+   cd OptiPrompt
+   ```
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Set up your environment variables in a `.env` file (see `.env.example`):
+3. Configure your Neural Nodes in `.env`:
    ```env
-   GEMINI_API_KEY_1=your_key_1
-   GEMINI_API_KEY_2=your_key_2
-   GEMINI_API_KEY_3=your_key_3
-   GEMINI_API_KEY_4=your_key_4
-   GEMINI_API_KEY_5=your_key_5
+   VITE_GROQ_API_KEY=your_primary_key
+   VITE_GROQ_API_KEY_2=your_failover_key
    ```
 
-### Development
-
-Run the development server (Full-stack mode):
+### Execution
+Launch the local development laboratory:
 ```bash
 npm run dev
 ```
-The app will be available at `http://localhost:3000`.
+Access the dashboard at `http://localhost:3000`.
 
-## 📁 Project Structure
+## 📁 Neural Architecture
 
-- `src/components/`: UI components (Dashboard, Landing, Analytics, etc.)
-- `src/lib/`: Context providers and utility functions.
-- `server.ts`: Express backend for API proxying and pre-optimization logic.
-- `firebase.ts`: Firebase initialization and configuration.
-- `firestore.rules`: Secure database access patterns.
+The codebase follows a modular, tiered hierarchy for maximum scalability:
+
+- `src/components/layout/`: Core UI shells (Dashboard & Landing systems).
+- `src/components/features/`: Neural engine components (Analytics, PromptTester, Settings).
+- `src/components/shared/`: Global utilities (Error Boundaries, Scroll recovery).
+- `src/lib/`: High-performance context providers and the Optimization Pipeline logic.
+- `src/pages/`: Knowledge base and documentation tiers.
+
+---
+*Built for the next generation of prompt engineering.*

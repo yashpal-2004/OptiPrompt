@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 export type KeyStatus = 'active' | 'quota_exceeded' | 'invalid' | 'unknown';
 
 export interface ApiKey {
   id: string;
+  name: string;
   key: string;
   status: KeyStatus;
   lastUsed?: Date;
@@ -13,27 +14,47 @@ export interface ApiKey {
 interface KeyContextType {
   keys: ApiKey[];
   updateKeyStatus: (id: string, status: KeyStatus, error?: string) => void;
-  getNextKey: () => string;
+  updateKey: (id: string, key: string) => void;
+  getNextKey: (index?: number) => string;
 }
 
 const KeyContext = createContext<KeyContextType | undefined>(undefined);
 
-// Use dynamically passed keys from vite.config.ts to respect .env order
-const rawKeys = (process.env as any).GEMINI_KEYS as { id: string, key: string }[] || [];
-
-const INITIAL_KEYS: ApiKey[] = rawKeys.length > 0 
-  ? rawKeys.map(k => ({ id: k.id, key: k.key, status: 'unknown' as KeyStatus }))
-  : [
-      { id: 'Key 1', key: (process.env as any).GEMINI_API_KEY_1 || '', status: 'unknown' as KeyStatus },
-      { id: 'Key 2', key: (process.env as any).GEMINI_API_KEY_2 || '', status: 'unknown' as KeyStatus },
-      { id: 'Key 3', key: (process.env as any).GEMINI_API_KEY_3 || '', status: 'unknown' as KeyStatus },
-      { id: 'Key 4', key: (process.env as any).GEMINI_API_KEY_4 || '', status: 'unknown' as KeyStatus },
-      { id: 'Key 5', key: (process.env as any).GEMINI_API_KEY_5 || '', status: 'unknown' as KeyStatus },
-    ].filter(k => k.key);
+const STORAGE_KEY = 'optiprompt_keys_v2';
 
 export const KeyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [keys, setKeys] = useState<ApiKey[]>(INITIAL_KEYS);
-  const currentIndexRef = React.useRef(0);
+  const [keys, setKeys] = useState<ApiKey[]>(() => {
+    // Initial fallback to ENV
+    const envKey1 = (import.meta as any).env?.VITE_GROQ_API_KEY || "";
+    const envKey2 = (import.meta as any).env?.VITE_GROQ_API_KEY_2 || "";
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as ApiKey[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // ENV Override Logic: If env key is provided, it takes precedence over storage
+          // to ensure .env changes are always reflected on startup.
+          return parsed.map(k => {
+            if (k.id === 'groq-1' && envKey1) return { ...k, key: envKey1, status: envKey1 === k.key ? k.status : 'unknown' };
+            if (k.id === 'groq-2' && envKey2) return { ...k, key: envKey2, status: envKey2 === k.key ? k.status : 'unknown' };
+            return k;
+          });
+        }
+      } catch (e) {
+        console.error("Failed to parse keys from storage", e);
+      }
+    }
+    
+    return [
+      { id: 'groq-1', name: 'Primary Node', key: envKey1, status: 'unknown' as KeyStatus },
+      { id: 'groq-2', name: 'Secondary Node (Failover)', key: envKey2, status: 'unknown' as KeyStatus },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(keys));
+  }, [keys]);
 
   const updateKeyStatus = useCallback((id: string, status: KeyStatus, error?: string) => {
     setKeys(prev => prev.map(k => 
@@ -41,30 +62,20 @@ export const KeyProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ));
   }, []);
 
-  const getNextKey = useCallback(() => {
-    if (keys.length === 0) return process.env.GEMINI_API_KEY || '';
-    
-    // First, try to find an 'active' or 'unknown' key starting from current index
-    let startIdx = currentIndexRef.current;
-    
-    for (let i = 0; i < keys.length; i++) {
-        const potentialIdx = (startIdx + i) % keys.length;
-        const potentialKey = keys[potentialIdx];
-        
-        if (potentialKey.status === 'active' || potentialKey.status === 'unknown') {
-            currentIndexRef.current = (potentialIdx + 1) % keys.length;
-            return potentialKey.key;
-        }
-    }
-    
-    // If all keys are marked bad, fallback to simple blind rotation for retries
-    const key = keys[currentIndexRef.current].key;
-    currentIndexRef.current = (currentIndexRef.current + 1) % keys.length;
-    return key;
+  const updateKey = useCallback((id: string, key: string) => {
+    setKeys(prev => prev.map(k => 
+      k.id === id ? { ...k, key, status: 'unknown', error: undefined } : k
+    ));
+  }, []);
+
+  const getNextKey = useCallback((index = 0) => {
+    const activeKeys = keys.filter(k => k.key);
+    if (activeKeys.length === 0) return "";
+    return activeKeys[index % activeKeys.length].key;
   }, [keys]);
 
   return (
-    <KeyContext.Provider value={{ keys, updateKeyStatus, getNextKey }}>
+    <KeyContext.Provider value={{ keys, updateKeyStatus, updateKey, getNextKey }}>
       {children}
     </KeyContext.Provider>
   );
@@ -77,3 +88,4 @@ export const useKeys = () => {
   }
   return context;
 };
+

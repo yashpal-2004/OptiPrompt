@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useAuth } from '../lib/AuthContext';
+import { useAuth } from '../../lib/AuthContext';
 import { Zap, Mail, Lock, ArrowRight, Chrome, Sparkles, ShieldCheck, TrendingUp, DollarSign, Activity, Globe, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';

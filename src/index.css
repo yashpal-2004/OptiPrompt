@@ -8,10 +8,10 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
   body {
-    @apply antialiased bg-[#F8FAFC] text-slate-900;
+    @apply antialiased bg-[#F8FAFC] text-slate-800 font-sans;
   }
 }
 
@@ -27,16 +27,28 @@
   }
 
   .glass {
-    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
+    @apply bg-white/80 backdrop-blur-md border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.02)];
+    border-width: 0.5px;
+    border-radius: 12px;
   }
 
   .glass-dark {
-    @apply bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-slate-900/95 backdrop-blur-lg border border-white/10 shadow-2xl;
+    border-width: 0.5px;
+    border-radius: 12px;
+  }
+
+  .card {
+    @apply bg-white shadow-sm transition-all duration-200;
+    border: 0.5px solid #E2E8F0;
+    border-radius: 12px;
   }
 
   .grid-bg {
-    background-image: radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.05) 1px, transparent 0);
-    background-size: 24px 24px;
+    background-image: 
+      radial-gradient(circle at 2px 2px, rgba(0, 0, 0, 0.03) 1px, transparent 0);
+    background-size: 32px 32px;
+    will-change: transform;
   }
 
   .text-glow {

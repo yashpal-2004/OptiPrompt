@@ -40,7 +40,7 @@ export function Status() {
           </div>
           
           <div className="space-y-4 mt-8">
-            {['Frontend Dashboard', 'Optimization Engine', 'Gemini API Connectivity'].map(service => (
+            {['Frontend Dashboard', 'Optimization Engine', 'Groq API Connectivity'].map(service => (
               <div key={service} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-gray-100 last:border-0 gap-2">
                 <p className="font-bold text-gray-700">{service}</p>
                 <div className="flex items-center gap-2 text-green-600">

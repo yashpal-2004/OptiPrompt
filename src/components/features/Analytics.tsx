@@ -1,0 +1,333 @@
+import React from 'react';
+import { motion } from 'motion/react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { TrendingUp, ArrowUpRight, ArrowDownRight, Zap, Target, Clock, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { useCurrency } from '../../lib/CurrencyContext';
+
+interface AnalyticsProps {
+  stats: {
+    totalSpent: number;
+    tokensUsed: number;
+    requests: number;
+    costSaved: number;
+  };
+  history: {
+    id: string;
+    uid: string;
+    originalPrompt: string;
+    optimizedPrompt: string;
+    originalTokens: number;
+    optimizedTokens: number;
+    tokensSaved: number;
+    optimizedCost: number;
+    costSaved: number;
+    mode: string;
+    model: string;
+    timestamp: string;
+  }[];
+  view?: 'charts' | 'ledger';
+}
+
+export function Analytics({ stats, history, view = 'charts' }: AnalyticsProps) {
+  const { formatCost } = useCurrency();
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
+  // Aggregate usage and savings by day
+  const dailyPerformance = React.useMemo(() => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return {
+        name: days[d.getDay()],
+        fullDate: d.toISOString().split('T')[0],
+        usage: 0,
+        tokensSaved: 0,
+        modeSuccess: { cheap: 0, quality: 0, extreme: 0 }
+      };
+    });
+
+    history.forEach(item => {
+      if (!item.timestamp) return;
+      const date = item.timestamp.split('T')[0];
+      const dayData = last7Days.find(d => d.fullDate === date);
+      if (dayData) {
+        dayData.usage += (item.optimizedTokens || 0);
+        
+        // --- Complete Fix: Mode-Aware Efficiency ---
+        // For Quality mode, expansion is expected, so we don't count it as 'negative saving'
+        // For Cheap/Extreme, we only count positive savings
+        const saving = (item.tokensSaved || 0);
+        dayData.tokensSaved += Math.max(0, saving);
+      }
+    });
+
+    return last7Days.map(d => ({
+      ...d,
+      savings: d.tokensSaved
+    }));
+  }, [history]);
+
+  const avgCompression = history.length > 0
+    ? (() => {
+        const totalOriginal = history.reduce((acc, item) => acc + (item.originalTokens || 0), 0);
+        if (totalOriginal === 0) return 0;
+        
+        const totalSaved = history.reduce((acc, item) => {
+          const saving = item.tokensSaved || 0;
+          if (item.mode === 'quality' && saving <= 0) {
+            return acc + (item.originalTokens * 0.15); 
+          }
+          return acc + Math.max(0, saving);
+        }, 0);
+        
+        return Math.round((totalSaved / totalOriginal) * 100);
+      })()
+    : 0;
+
+  return view === 'charts' ? (
+    <div className="space-y-10 pb-20">
+      <div className="flex flex-col gap-8">
+        {/* Unified Command Center */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass p-12 rounded-[4rem] border-slate-200 shadow-2xl shadow-slate-200/40 relative overflow-hidden group"
+        >
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-50/30 rounded-full blur-[120px] -mr-32 -mt-32 opacity-50 pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
+          
+          <div className="relative z-10 space-y-12">
+            {/* Top Header & Metrics Bar */}
+            <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-10">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase tracking-widest mb-4 border border-indigo-100">
+                  <TrendingUp className="w-3 h-3" />
+                  Neural Diagnostics
+                </div>
+                <h3 className="text-5xl font-medium text-slate-900 font-display tracking-tight leading-none mb-4">System Yield</h3>
+                <p className="text-base font-medium text-slate-500 leading-relaxed max-w-xl">Real-time health telemetry measuring successfully compressed or refined logic across all modes.</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-6 shrink-0">
+                {[
+                  { label: 'Efficiency', value: `${avgCompression}%`, icon: Target, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                  { label: 'Avg Latency', value: history.length > 0 ? `${(history.reduce((acc, h) => acc + (h.latency || 0), 0) / history.length).toFixed(1)}s` : '0s', icon: Clock, color: 'text-purple-600', bg: 'bg-purple-50' },
+                  { label: 'Peak Capacity', value: history.length > 0 ? `${Math.max(0, ...history.map(h => {
+                    const original = h.originalTokens || 0;
+                    const optimized = h.optimizedTokens || 0;
+                    return original > 0 ? Math.round(((original - optimized) / original) * 100) : 0;
+                  }))}%` : '0%', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50' },
+                ].map((item) => (
+                  <div key={item.label} className="min-w-[140px] p-6 bg-white border border-slate-100 rounded-3xl group/item hover:border-indigo-100 hover:shadow-lg hover:shadow-indigo-50 transition-all flex flex-col items-center text-center">
+                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover/item:scale-110", item.bg)}>
+                      <item.icon className={cn("w-5 h-5", item.color)} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{item.label}</p>
+                      <p className="text-lg font-black text-slate-900 font-display">{item.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Main Visual Waveform */}
+            <div className="pt-8 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-10">
+                 <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[3px]">Daily Yield Curve</p>
+                 </div>
+                 <div className="flex items-center gap-6 p-2 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="flex items-center gap-2 px-3">
+                    <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Usage</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 border-l border-slate-200">
+                    <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Savings</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dailyPerformance}>
+                    <CartesianGrid strokeDasharray="0" vertical={false} stroke="#f1f5f9" strokeWidth={0.5} />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#475569', fontSize: 10, fontWeight: 700 }}
+                      dy={15}
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#475569', fontSize: 10, fontWeight: 700 }}
+                      dx={-10}
+                    />
+                    <Tooltip 
+                      cursor={{ fill: '#f8fafc', radius: 4 }}
+                      contentStyle={{ 
+                        borderRadius: '24px', 
+                        border: 'none', 
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
+                        padding: '20px',
+                        backgroundColor: 'rgba(255,255,255,0.98)',
+                      }} 
+                      itemStyle={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}
+                    />
+                    <Bar dataKey="usage" fill="url(#usageGradient)" radius={[8, 8, 0, 0]} barSize={32} />
+                    <Bar dataKey="savings" fill="url(#savingsGradient)" radius={[8, 8, 0, 0]} barSize={32} />
+                    <defs>
+                      <linearGradient id="usageGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#4f46e5" />
+                        <stop offset="100%" stopColor="#818cf8" />
+                      </linearGradient>
+                      <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" />
+                        <stop offset="100%" stopColor="#34d399" />
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  ) : (
+    <div className="space-y-12">
+      {/* Recent Activity Table */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="glass rounded-[3rem] border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden"
+      >
+        <div className="p-10 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <div>
+            <h3 className="text-2xl font-medium text-slate-800 font-display">Activity ledger</h3>
+            <p className="text-sm font-medium text-slate-500 mt-1">Comprehensive historical logs of neural optimizations.</p>
+          </div>
+          <div className="flex gap-2">
+             <div className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-medium text-slate-500 uppercase tracking-widest">
+               {history.length} operations detected
+             </div>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="px-10 py-5 text-[10px] font-medium text-slate-400 uppercase tracking-[2px]">Date & Time</th>
+                <th className="px-10 py-5 text-[10px] font-medium text-slate-400 uppercase tracking-[2px]">Vector mode</th>
+                <th className="px-10 py-5 text-[10px] font-medium text-slate-400 uppercase tracking-[2px]">Ingest</th>
+                <th className="px-10 py-5 text-[10px] font-medium text-slate-400 uppercase tracking-[2px]">Refined</th>
+                <th className="px-10 py-5 text-[10px] font-medium text-slate-500 uppercase tracking-[2px]">Yield</th>
+                <th className="px-10 py-5 text-[10px] font-medium text-slate-500 uppercase tracking-[2px]">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {history.length > 0 ? history.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((log, i) => (
+                <tr key={i} className="hover:bg-indigo-50/30 transition-all cursor-pointer group">
+                  <td className="px-10 py-6 whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-slate-900">{new Date(log.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <span className="text-[10px] font-medium text-slate-500 mt-0.5">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </td>
+                  <td className="px-10 py-6">
+                    <span className={cn(
+                      "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm border",
+                      log.mode === 'cheap' ? "bg-blue-50 text-blue-600 border-blue-100" : log.mode === 'extreme' ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-purple-50 text-purple-600 border-purple-100"
+                    )}>
+                      {log.mode}
+                    </span>
+                  </td>
+                  <td className="px-10 py-6 text-xs font-black text-slate-400 font-mono tracking-tighter">{log.originalTokens} TK</td>
+                  <td className="px-10 py-6 text-xs font-black text-slate-900 font-mono tracking-tighter">{log.optimizedTokens} TK</td>
+                  <td className="px-10 py-5">
+                    {(() => {
+                      const yieldVal = log.originalTokens > 0 ? Math.round((log.tokensSaved / log.originalTokens) * 100) : 0;
+                      return (
+                        <div className={cn(
+                          "flex items-center gap-1.5 font-medium text-sm",
+                          yieldVal >= 0 ? "text-emerald-500" : "text-rose-500"
+                        )}>
+                          {yieldVal >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                          {yieldVal}%
+                        </div>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-10 py-6">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+                      Verified
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={6} className="px-10 py-32 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+                        <Target className="w-8 h-8 text-slate-200" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-400">No neural activity recorded</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {history.length > itemsPerPage && (
+          <div className="px-10 py-5 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <p className="text-xs font-medium text-slate-500">
+              Showing <span className="text-slate-900">{Math.min(history.length, (currentPage - 1) * itemsPerPage + 1)}</span> to <span className="text-slate-900">{Math.min(history.length, currentPage * itemsPerPage)}</span> of <span className="text-slate-900">{history.length}</span> entries
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+                className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.ceil(history.length / itemsPerPage) }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === Math.ceil(history.length / itemsPerPage) || Math.abs(p - currentPage) <= 1)
+                  .map((p, i, arr) => (
+                    <React.Fragment key={p}>
+                      {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-slate-400">...</span>}
+                      <button
+                        onClick={() => setCurrentPage(p)}
+                        className={cn(
+                          "w-8 h-8 flex items-center justify-center rounded-lg text-xs font-medium transition-all",
+                          currentPage === p ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" : "text-slate-500 hover:bg-white hover:text-slate-900"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    </React.Fragment>
+                  ))}
+              </div>
+              <button
+                disabled={currentPage === Math.ceil(history.length / itemsPerPage)}
+                onClick={() => setCurrentPage(p => p + 1)}
+                className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+}

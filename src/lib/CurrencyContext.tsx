@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 export const CURRENCIES = {
   USD: { symbol: '$', rate: 1, label: 'USD' },
   EUR: { symbol: '€', rate: 0.92, label: 'EUR' },
-  INR: { symbol: '₹', rate: 83.30, label: 'INR' },
+  INR: { symbol: '₹', rate: 90, label: 'INR' },
 };
 
 export type CurrencyKey = keyof typeof CURRENCIES;

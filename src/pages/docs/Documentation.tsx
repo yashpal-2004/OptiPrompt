@@ -61,16 +61,42 @@ export function Documentation() {
             <div className="grid md:grid-cols-3 gap-4">
               <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                 <h4 className="font-bold text-indigo-600 mb-2 uppercase tracking-widest text-xs">Cheap</h4>
-                <p className="text-sm text-gray-500">Maximum compression for low-priority tasks.</p>
+                <p className="text-sm text-gray-500">Fast, article-stripping compression for low-priority tasks.</p>
               </div>
               <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                 <h4 className="font-bold text-indigo-600 mb-2 uppercase tracking-widest text-xs">Quality</h4>
-                <p className="text-sm text-gray-500">Balanced approach for production use.</p>
+                <p className="text-sm text-gray-500">Structural refinement focused on clarity and instruction survival.</p>
               </div>
               <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                 <h4 className="font-bold text-indigo-600 mb-2 uppercase tracking-widest text-xs">Extreme</h4>
-                <p className="text-sm text-gray-500">Experimental high-efficiency refactoring.</p>
+                <p className="text-sm text-gray-500">Aggeessive telegraphic re-engineering for minimum token footprint.</p>
               </div>
+            </div>
+          </section>
+
+          <section className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                <Terminal className="w-5 h-5 text-indigo-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Metrics & Diagnostics</h2>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-8">
+              {[
+                { name: 'Total Saved', desc: 'The cumulative financial savings achieved by using optimized prompts instead of the source text.' },
+                { name: 'API Spend', desc: 'The actual billing amount incurred for neural processing during your current session.' },
+                { name: 'Requests', desc: 'The total count of neural optimization operations performed across all tiers.' },
+                { name: 'Tokens', desc: 'The cumulative sum of tokens ingested by the laboratory for refinement.' },
+                { name: 'Efficiency', desc: 'The weighted yield of neural optimizations, measuring successfully compressed or refined logic from your original inputs.' },
+                { name: 'Avg Latency', desc: 'The real-time average processing speed (in seconds) per neural optimization cycle.' },
+                { name: 'Peak Capacity', desc: 'The maximum single-pass compression yield achieved during the current laboratory session.' },
+              ].map(m => (
+                <div key={m.name} className="border-l-2 border-indigo-100 pl-4">
+                  <h4 className="font-bold text-gray-900 mb-1">{m.name}</h4>
+                  <p className="text-sm text-gray-500 leading-relaxed">{m.desc}</p>
+                </div>
+              ))}
             </div>
           </section>
         </div>

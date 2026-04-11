@@ -51,7 +51,7 @@ export function ApiReference() {
 {`{
   "prompt": "Your long prompt here...",
   "mode": "quality",
-  "model": "gemini-3-flash-preview"
+  "model": "llama-3.3-70b-versatile"
 }`}
                 </pre>
               </div>
