@@ -93,15 +93,15 @@ export function Analytics({ stats, history, view = 'charts' }: AnalyticsProps) {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass p-12 rounded-[4rem] border-slate-200 shadow-2xl shadow-slate-200/40 relative overflow-hidden group"
+          className="bg-white p-12 border-l-[10px] border-black shadow-2xl relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-50/30 rounded-full blur-[120px] -mr-32 -mt-32 opacity-50 pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red/5 rounded-full blur-[120px] -mr-32 -mt-32 opacity-50 pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
           
           <div className="relative z-10 space-y-12">
             {/* Top Header & Metrics Bar */}
             <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-10">
               <div className="flex-1">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase tracking-widest mb-4 border border-indigo-100">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-red text-white rounded-none text-[9px] font-black uppercase tracking-widest mb-4 border-none">
                   <TrendingUp className="w-3 h-3" />
                   Neural Diagnostics
                 </div>
@@ -111,21 +111,21 @@ export function Analytics({ stats, history, view = 'charts' }: AnalyticsProps) {
 
               <div className="grid grid-cols-3 gap-6 shrink-0">
                 {[
-                  { label: 'Efficiency', value: `${avgCompression}%`, icon: Target, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                  { label: 'Avg Latency', value: history.length > 0 ? `${(history.reduce((acc, h) => acc + (h.latency || 0), 0) / history.length).toFixed(1)}s` : '0s', icon: Clock, color: 'text-purple-600', bg: 'bg-purple-50' },
+                  { label: 'Efficiency', value: `${avgCompression}%`, icon: Target, color: 'text-red', bg: 'bg-red-light' },
+                  { label: 'Avg Latency', value: history.length > 0 ? `${(history.reduce((acc, h) => acc + (h.latency || 0), 0) / history.length).toFixed(1)}s` : '0s', icon: Clock, color: 'text-red', bg: 'bg-red-light' },
                   { label: 'Peak Capacity', value: history.length > 0 ? `${Math.max(0, ...history.map(h => {
                     const original = h.originalTokens || 0;
                     const optimized = h.optimizedTokens || 0;
                     return original > 0 ? Math.round(((original - optimized) / original) * 100) : 0;
-                  }))}%` : '0%', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50' },
+                  }))}%` : '0%', icon: Zap, color: 'text-red', bg: 'bg-red-light' },
                 ].map((item) => (
-                  <div key={item.label} className="min-w-[140px] p-6 bg-white border border-slate-100 rounded-3xl group/item hover:border-indigo-100 hover:shadow-lg hover:shadow-indigo-50 transition-all flex flex-col items-center text-center">
-                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover/item:scale-110", item.bg)}>
+                  <div key={item.label} className="min-w-[140px] p-6 bg-[#f3f2ee] border-none transition-all flex flex-col items-center text-center">
+                    <div className={cn("w-10 h-10 flex items-center justify-center mb-3 transition-transform group-hover/item:scale-110", item.bg)}>
                       <item.icon className={cn("w-5 h-5", item.color)} />
                     </div>
                     <div>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{item.label}</p>
-                      <p className="text-lg font-black text-slate-900 font-display">{item.value}</p>
+                      <p className="text-[9px] font-black text-black/40 uppercase tracking-widest mb-0.5">{item.label}</p>
+                      <p className="text-lg font-black text-black font-display">{item.value}</p>
                     </div>
                   </div>
                 ))}
@@ -139,7 +139,7 @@ export function Analytics({ stats, history, view = 'charts' }: AnalyticsProps) {
                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[3px]">Daily Yield Curve</p>
                  </div>
-                 <div className="flex items-center gap-6 p-2 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="flex items-center gap-6 p-4 bg-black text-white">
                   <div className="flex items-center gap-2 px-3">
                     <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Usage</span>
@@ -183,12 +183,12 @@ export function Analytics({ stats, history, view = 'charts' }: AnalyticsProps) {
                     <Bar dataKey="savings" fill="url(#savingsGradient)" radius={[8, 8, 0, 0]} barSize={32} />
                     <defs>
                       <linearGradient id="usageGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4f46e5" />
-                        <stop offset="100%" stopColor="#818cf8" />
+                        <stop offset="0%" stopColor="#000000" />
+                        <stop offset="100%" stopColor="#333333" />
                       </linearGradient>
                       <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" />
-                        <stop offset="100%" stopColor="#34d399" />
+                        <stop offset="0%" stopColor="#e61e2a" />
+                        <stop offset="100%" stopColor="#ff4d4d" />
                       </linearGradient>
                     </defs>
                   </BarChart>
@@ -206,7 +206,7 @@ export function Analytics({ stats, history, view = 'charts' }: AnalyticsProps) {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="glass rounded-[3rem] border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden"
+        className="bg-white border-l-[10px] border-red shadow-2xl overflow-hidden"
       >
         <div className="p-10 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
           <div>
@@ -222,13 +222,13 @@ export function Analytics({ stats, history, view = 'charts' }: AnalyticsProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-10 py-5 text-[10px] font-medium text-slate-400 uppercase tracking-[2px]">Date & Time</th>
-                <th className="px-10 py-5 text-[10px] font-medium text-slate-400 uppercase tracking-[2px]">Vector mode</th>
-                <th className="px-10 py-5 text-[10px] font-medium text-slate-400 uppercase tracking-[2px]">Ingest</th>
-                <th className="px-10 py-5 text-[10px] font-medium text-slate-400 uppercase tracking-[2px]">Refined</th>
-                <th className="px-10 py-5 text-[10px] font-medium text-slate-500 uppercase tracking-[2px]">Yield</th>
-                <th className="px-10 py-5 text-[10px] font-medium text-slate-500 uppercase tracking-[2px]">Status</th>
+              <tr className="bg-black text-white border-none">
+                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[2px]">Date & Time</th>
+                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[2px]">Vector mode</th>
+                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[2px]">Ingest</th>
+                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[2px]">Refined</th>
+                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[2px]">Yield</th>
+                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[2px]">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -242,8 +242,8 @@ export function Analytics({ stats, history, view = 'charts' }: AnalyticsProps) {
                   </td>
                   <td className="px-10 py-6">
                     <span className={cn(
-                      "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm border",
-                      log.mode === 'cheap' ? "bg-blue-50 text-blue-600 border-blue-100" : log.mode === 'extreme' ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-purple-50 text-purple-600 border-purple-100"
+                      "px-3 py-1.5 text-[9px] font-black uppercase tracking-widest border-none",
+                      log.mode === 'cheap' ? "bg-black text-white" : log.mode === 'extreme' ? "bg-red text-white" : "bg-black text-white opacity-40"
                     )}>
                       {log.mode}
                     </span>

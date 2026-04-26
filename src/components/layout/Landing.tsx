@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { useAuth } from '../../lib/AuthContext';
-import { Zap, Mail, Lock, ArrowRight, Chrome, Sparkles, ShieldCheck, TrendingUp, DollarSign, Activity, Globe, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
+import { ArrowRight, Plus, Zap, Activity, Shield, Cpu } from 'lucide-react';
 
 export function Landing() {
   const { signInWithGoogle } = useAuth();
@@ -25,192 +25,191 @@ export function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div className="landing-page">
+      <div className="grid-bg-overlay" />
+      
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-6 h-6 text-white fill-current" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-gray-900">OptiPrompt</span>
+      <header className="container">
+        <nav className="navbar">
+          <div className="logo">OPTIPROMPT<span className="text-red">.</span></div>
+          <div className="nav-links">
+            <a href="#about" className="nav-link">Architecture</a>
+            <a href="#work" className="nav-link">Laboratory</a>
+            <a href="#services" className="nav-link">Intelligence</a>
+            <Link to="/status" className="nav-link">Node</Link>
           </div>
-          <button 
-            onClick={handleGoogleSignIn}
-            className="px-5 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100"
-          >
-            Get Started
-          </button>
-        </div>
-      </nav>
+          <button className="btn-start" onClick={handleGoogleSignIn}>Initialize Node</button>
+        </nav>
+      </header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-20 pb-32 grid lg:grid-cols-2 gap-16 items-center">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-8"
+      <section className="container hero">
+        <motion.span 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="hero-subtitle"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-widest">
-            <Sparkles className="w-4 h-4" />
-            Optimize your AI budget
+          Neural Engineering & Optimization Studio
+        </motion.span>
+        <motion.h1 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="hero-title"
+        >
+          We Engineer High-Density <span className="text-red">Prompts</span>
+        </motion.h1>
+
+        <div className="hero-bottom">
+          <motion.div 
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="hero-desc"
+          >
+            OptiPrompt is a premier creative laboratory focused on the intersection of AI logic and semantic efficiency. We transform raw instructions into high-performance neural vectors that reduce token costs while maximizing intelligence output.
+          </motion.div>
+          
+          <motion.div 
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="hero-explore"
+            onClick={handleGoogleSignIn}
+            style={{ cursor: 'pointer' }}
+          >
+            <span>Enter Laboratory</span>
+            <div className="explore-circle">
+              <ArrowRight size={20} />
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Stats */}
+        <div className="stats">
+          <div className="stat-item">
+            <span className="stat-number">12.5M+</span>
+            <span className="stat-label">Tokens Optimized</span>
           </div>
-          <h1 className="text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
-            Reduce your AI costs by up to <span className="text-indigo-600">80%</span> without losing quality.
-          </h1>
-          <p className="text-xl text-gray-500 leading-relaxed max-w-xl">
-            The ultimate toolkit for developers and businesses to monitor, optimize, and scale their AI usage with precision.
+          <div className="stat-item">
+            <span className="stat-number">40%</span>
+            <span className="stat-label">Average Cost Reduction</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">99.9%</span>
+            <span className="stat-label">System Uptime</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">Sub-10ms</span>
+            <span className="stat-label">Optimization Latency</span>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="container about">
+        <div className="about-label">The Architecture</div>
+        <div className="about-content">
+          <h2>We Are A <span className="text-red">Neural</span> Powerhouse</h2>
+          <p>
+            Driven by semantic precision, we refine the dialogue between humans and machines. 
+            Our architecture collapses redundant context and injects structural clarity, ensuring your AI interactions are as efficient as they are intelligent.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button 
-              onClick={handleGoogleSignIn}
-              className="px-8 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all active:scale-95 shadow-xl shadow-indigo-200 flex items-center justify-center gap-2"
-            >
-              Start Optimizing Free <ArrowRight className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => navigate('/docs')}
-              className="px-8 py-4 bg-white border-2 border-gray-100 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center gap-2"
-            >
-              View Documentation
-            </button>
+        </div>
+      </section>
+
+      {/* Works Section */}
+      <section id="work" className="container works">
+        <div className="works-header">
+          <h2>Neural <span className="text-red">Laboratory</span> // Diagnostic Gallery</h2>
+          <div className="hero-explore" onClick={handleGoogleSignIn} style={{ cursor: 'pointer' }}>
+            <span>Run Experiment</span>
+            <div className="explore-circle">
+              <Plus size={20} />
+            </div>
           </div>
-          <div className="flex items-center gap-6 pt-4">
-            <div className="flex -space-x-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gray-200 overflow-hidden">
-                  <img src={`https://picsum.photos/seed/user${i}/40/40`} alt="User" referrerPolicy="no-referrer" />
+        </div>
+
+        <div className="works-grid">
+          <div className="work-item work-1">
+            <img src="/images/ai_prompt_optimization_viz_1777236841858.png" alt="Neural Synthesis" />
+            <div className="work-info">
+              <span className="work-title">Neural Synthesis</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+          <div className="work-item work-2">
+            <img src="/images/token_compression_art_1777236855139.png" alt="Token Compression" />
+            <div className="work-info">
+              <span className="work-title">Token Compression</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+          <div className="work-item work-3">
+            <img src="/images/neural_network_studio_1777236873106.png" alt="Prompt Engineering" />
+            <div className="work-info">
+              <span className="work-title">Prompt Engineering</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+          <div className="work-item work-4">
+            <img src="/images/data_analytics_dashboard_art_1777236889618.png" alt="Core Diagnostics" />
+            <div className="work-info">
+              <span className="work-title">Core Diagnostics</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+          <div className="work-item work-5">
+            <img src="/images/cybernetic_prompt_flow_1777236906139.png" alt="Semantic Flow" />
+            <div className="work-info">
+              <span className="work-title">Semantic Flow</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+          <div className="work-item work-6">
+            <img src="/images/ai_intelligence_hub_1777236921770.png" alt="Intelligence Core" />
+            <div className="work-info">
+              <span className="work-title">Intelligence Core</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section id="services" className="container section-padding" style={{ borderTop: '1.5px solid rgba(0,0,0,0.08)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '100px' }}>
+          <div className="about-label">Intelligence Layers</div>
+          <div>
+            <h2 style={{ fontSize: '72px', marginBottom: '40px' }}>Capabilities That Drive <span className="text-red">Efficiency</span></h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+              {[
+                { id: '01', title: 'Contextual Compression', desc: 'We utilize advanced NLP techniques to collapse redundant context, reducing your token footprint by up to 60% without losing technical depth.' },
+                { id: '02', title: 'Neural Refinement', desc: 'Structural optimization of prompt vectors to ensure maximum clarity and reasoning performance across LLM architectures.' },
+                { id: '03', title: 'Diagnostic Analytics', desc: 'Real-time monitoring of prompt performance, token savings, and cost-efficiency metrics across your entire intelligence pipeline.' }
+              ].map(service => (
+                <div key={service.id} style={{ display: 'flex', gap: '40px', padding: '40px 0', borderTop: '1.5px solid rgba(0,0,0,0.08)' }}>
+                  <span style={{ fontSize: '24px', fontWeight: 800, color: '#e61e2a' }}>{service.id}</span>
+                  <div>
+                    <h3 style={{ fontSize: '32px', marginBottom: '15px' }}>{service.title}</h3>
+                    <p style={{ color: 'rgba(0,0,0,0.4)', fontSize: '16px', maxWidth: '500px' }}>{service.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
-            <p className="text-sm text-gray-500 font-medium">Joined by 2,000+ developers</p>
-          </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="relative"
-        >
-          <div className="absolute -inset-4 bg-indigo-600/5 rounded-[3rem] blur-3xl" />
-          <div className="relative bg-white p-8 rounded-[3rem] border border-gray-100 shadow-2xl space-y-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Real-time Savings</p>
-                  <p className="text-lg font-bold text-gray-900">₹1,04,240.50 saved</p>
-                </div>
-              </div>
-              <div className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                +84% Efficiency
-              </div>
-            </div>
-            <div className="h-48 bg-gray-50 rounded-2xl border border-gray-100 flex items-end justify-between p-6 gap-2">
-              {[40, 70, 45, 90, 65, 80, 55].map((h, i) => (
-                <motion.div 
-                  key={i}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${h}%` }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  className="w-full bg-indigo-600/20 rounded-t-lg relative group"
-                >
-                  <div className="absolute inset-0 bg-indigo-600 rounded-t-lg scale-y-0 group-hover:scale-y-100 transition-transform origin-bottom" />
-                </motion.div>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tokens Used</p>
-                <p className="text-xl font-bold text-gray-900">1.2M</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Avg. Latency</p>
-                <p className="text-xl font-bold text-gray-900">0.8s</p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Features Section */}
-      <section className="bg-white py-32 border-y border-gray-100">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-            <h2 className="text-4xl font-bold text-gray-900 tracking-tight">Three Modes of Optimization</h2>
-            <p className="text-lg text-gray-500">Choose the right balance between cost and quality for your specific use case.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { icon: DollarSign, title: 'CHEAP Mode', desc: 'Optimized for minimal cost. Uses aggressive compression and removes all redundancy while maintaining core meaning. Best for high-volume, low-criticality tasks.' },
-              { icon: Sparkles, title: 'QUALITY Mode', desc: 'Balanced optimization. Focuses on structural improvements, clarity, and fixing grammatical errors to ensure high-end output quality. Ideal for customer-facing content.' },
-              { icon: Zap, title: 'EXTREME Mode', desc: 'Maximum innovation. Uses experimental refactoring techniques for the highest level of efficiency and standout performance. Perfect for complex logic and technical prompts.' },
-            ].map((feature, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="p-8 rounded-3xl border border-gray-100 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-50 transition-all group"
-              >
-                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-indigo-600 transition-all">
-                  <feature.icon className="w-6 h-6 text-indigo-600 group-hover:text-white transition-colors" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-500 leading-relaxed">{feature.desc}</p>
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="max-w-7xl mx-auto px-6 py-32">
-        <div className="bg-indigo-600 rounded-[3rem] p-12 md:p-20 text-center space-y-8 relative overflow-hidden shadow-2xl shadow-indigo-200">
-          <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-            <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
-          </div>
-          <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight max-w-3xl mx-auto">
-            Ready to stop overpaying for AI? Join the future of efficient LLM usage.
-          </h2>
-          <p className="text-indigo-100 text-lg max-w-xl mx-auto">
-            Get started for free today. No credit card required. Cloud sync included by default.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <button 
-              onClick={handleGoogleSignIn}
-              className="px-8 py-4 bg-white text-indigo-600 font-bold rounded-2xl hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center gap-2"
-            >
-              <Chrome className="w-5 h-5" /> Continue with Google
-            </button>
-          </div>
-          <div className="flex flex-wrap justify-center gap-8 pt-8">
-            {['No credit card', 'Cancel anytime', 'Free for individuals'].map((text) => (
-              <div key={text} className="flex items-center gap-2 text-indigo-100 text-sm font-medium">
-                <CheckCircle2 className="w-4 h-4" /> {text}
-              </div>
-            ))}
-          </div>
+      {/* Footer */}
+      <footer className="container" style={{ padding: '60px 0', borderTop: '1.5px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="logo" style={{ fontSize: '18px' }}>OPTIPROMPT<span className="text-red">.</span></div>
+        <div style={{ fontSize: '12px', color: 'rgba(0,0,0,0.4)', fontWeight: 700, textTransform: 'uppercase' }}>
+          © 2026 OptiPrompt. Neural Optimization Node 12-A.
         </div>
-      </section>
-
-      <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-gray-100 flex flex-col items-center justify-between gap-6 text-sm text-gray-400 sm:flex-row">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4" />
-          <span>© 2026 OptiPrompt. All rights reserved.</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-6 sm:justify-end">
-          <Link to="/docs" className="hover:text-gray-600 transition-colors">Documentation</Link>
-          <Link to="/api-ref" className="hover:text-gray-600 transition-colors">API</Link>
-          <Link to="/safety" className="hover:text-gray-600 transition-colors">Safety</Link>
-          <Link to="/privacy" className="hover:text-gray-600 transition-colors">Privacy</Link>
-          <Link to="/terms" className="hover:text-gray-600 transition-colors">Terms</Link>
-          <Link to="/status" className="hover:text-gray-600 transition-colors">Status</Link>
+        <div className="nav-links" style={{ gap: '20px' }}>
+          <Link to="/privacy" className="nav-link" style={{ fontSize: '11px' }}>Privacy</Link>
+          <Link to="/terms" className="nav-link" style={{ fontSize: '11px' }}>Terms</Link>
         </div>
       </footer>
     </div>

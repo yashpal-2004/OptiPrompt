@@ -1,60 +1,57 @@
-# OptiPrompt 🚀
+# OPTIPROMPT.
+### High-Performance Neural Engineering & Optimization Studio
 
-**OptiPrompt** is a state-of-the-art neural workspace designed to architect, optimize, and scale your LLM interactions. By leveraging advanced 6-stage compression algorithms and high-fidelity logical refinement, OptiPrompt reduces token overhead by up to 80% while enhancing instruction clarity.
+**OptiPrompt** is a premier, creative-studio-inspired workspace designed to architect, optimize, and scale LLM interactions. By merging advanced semantic compression with high-fidelity logical refinement, OptiPrompt transforms raw prompts into high-density neural vectors, reducing token overhead by up to 60% while maximizing instruction clarity.
 
-![OptiPrompt Neural Dashboard](https://picsum.photos/seed/optiprompt/1200/400)
+## Neural Core Architecture
 
-## ✨ Neural Optimization Core
+OptiPrompt utilizes a sophisticated multi-stage pipeline to re-engineer instructions for maximum performance and cost-efficiency:
 
-OptiPrompt goes beyond simple prompting. It utilizes a sophisticated multi-stage pipeline to re-engineer instructions for maximum performance:
+- **Semantic Synthesis** — Analyzes prompt intent to collapse redundant context and social padding.
+- **Structural Injection** — Automatically reformats prompts into high-clarity technical blocks.
+- **Token Compression** — Utilizes a telegraphic refactoring engine to minimize footprint.
+- **Diagnostic Real-time Analytics** — Monitors every optimization cycle with precision diagnostics.
 
-- **Stage 1: Rule Cleaner** — Eliminates linguistic filler and social padding.
-- **Stage 2: Context Reducer** — Strips redundant preambles while preserving technical context.
-- **Stage 3: Template Formatter** — Automatically structures prompts based on intent (Code, Logic, Creative).
-- **Stage 4: Output Controller** — Enforces token-efficient response constraints.
-- **Stage 5: Neural Cache** — Instant retrieval for repeated prompt patterns (Zero Latency).
-- **Stage 6: LLM Compressor** — Semantic refactoring via Groq-powered Llama-3.3-70B.
+## Laboratory Features
 
-## 💎 Premium Features
+- **Tiered Optimization Modes**:
+  - **CHEAP**: Aggressive token reduction for high-volume tasks.
+  - **QUALITY**: Precision refinement focusing on logic and professional tone.
+  - **EXTREME**: High-density telegraphic refactoring for minimum token costs.
+- **Multi-Node Failover**: Industrial-grade reliability with automatic rotation between primary and secondary Groq nodes.
+- **Creative Studio Aesthetic**: A premium beige, red, and black design language featuring 60px grid overlays and minimalist fluid animations (`motion/react`).
+- **Interactive Diagnostics**: Real-time telemetry monitoring latency, API spend, and compression yield.
 
-- **Tiered Compression Modes**:
-  - **CHEAP**: Aggressive token reduction for cost-sensitive high-volume tasks.
-  - **QUALITY**: High-fidelity refinement focusing on logic, structure, and professional tone.
-  - **EXTREME**: Telegraphic refactoring for maximum density and minimum token footprint.
-- **Dual-Node Failover**: Industrial-grade reliability with automatic rotation between primary and secondary Groq nodes.
-- **Refinement Yield Metrics**: Advanced analytics that credit quality-mode logic enhancement even when token expansion occurs.
-- **Real-time Telemetry**: Monitoring of latency, API spend, and compression efficiency across all neural sessions.
-- **Enterprise UI**: A luxury-tech aesthetic featuring glassmorphic effects, fluid animations (`motion/react`), and deep responsive layouts.
+## Performance Stack
 
-## 🛠️ Performance Stack
+- **Frontend**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Compute Engine**: [Groq](https://groq.com/) (Llama-3.3-70B-Versatile)
+- **Styling**: [Tailwind CSS 4.0](https://tailwindcss.com/) + Custom Studio Design System
+- **Animations**: [Framer Motion](https://framer.com/motion)
+- **Persistence**: [Firebase](https://firebase.google.com/) (Auth & Firestore)
+- **Icons**: [Lucide React](https://lucide.dev/)
 
-- **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
-- **Compute**: [Groq](https://groq.com/) (Llama-3.3-70B-Versatile)
-- **Persistence**: [Firebase Firestore](https://firebase.google.com/)
-- **Identity**: [Firebase Auth](https://firebase.google.com/)
-- **Visuals**: [Tailwind CSS 4.0](https://tailwindcss.com/) + [Framer Motion](https://framer.com/motion)
-- **Analytics**: [Recharts](https://recharts.org/)
-
-## 🚀 Neural Deployment
+## Deployment Protocol
 
 ### Prerequisites
 - Node.js 18+
-- [Groq API Keys](https://console.groq.com/) (Recommend 2 keys for failover support)
+- [Groq API Keys](https://console.groq.com/) (Supports dual-node rotation)
 
 ### Installation
-1. Clone the workspace:
+1. **Initialize Workspace**:
    ```bash
    git clone https://github.com/yashpal-2004/optiprompt.git
    cd OptiPrompt
    ```
-2. Install dependencies:
+2. **Synchronize Dependencies**:
    ```bash
    npm install
    ```
-3. Configure your Neural Nodes in `.env`:
+3. **Configure Neural Environment**:
+   Create a `.env` file at the root:
    ```env
-   VITE_GROQ_API_KEY=your_primary_key
-   VITE_GROQ_API_KEY_2=your_failover_key
+   VITE_GROQ_API_KEY=primary_node_key
+   VITE_GROQ_API_KEY_2=failover_node_key
    ```
 
 ### Execution
@@ -62,17 +59,12 @@ Launch the local development laboratory:
 ```bash
 npm run dev
 ```
-Access the dashboard at `http://localhost:3000`.
 
 ## 📁 Neural Architecture
 
-The codebase follows a modular, tiered hierarchy for maximum scalability:
+The workspace is organized into modular tiers for maximum scalability:
 
-- `src/components/layout/`: Core UI shells (Dashboard & Landing systems).
-- `src/components/features/`: Neural engine components (Analytics, PromptTester, Settings).
-- `src/components/shared/`: Global utilities (Error Boundaries, Scroll recovery).
-- `src/lib/`: High-performance context providers and the Optimization Pipeline logic.
-- `src/pages/`: Knowledge base and documentation tiers.
-
----
-*Built for the next generation of prompt engineering.*
+- `src/components/layout/` — High-fidelity UI shells (Landing & Dashboard).
+- `src/components/features/` — Neural engine interfaces (Laboratory, Analytics, Settings).
+- `src/lib/` — Optimization Pipeline logic and neural state management.
+- `public/images/` — High-resolution studio assets and visualizations.

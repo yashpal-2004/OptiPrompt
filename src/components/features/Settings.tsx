@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../lib/AuthContext';
 import { useCurrency, CURRENCIES, CurrencyKey } from '../../lib/CurrencyContext';
 import { useKeys } from '../../lib/KeyContext';
-import { User, Mail, Shield, Globe, Save, ArrowLeft, Trash2, CreditCard, Bell, Zap, Key, RefreshCw, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { User, Mail, Shield, Globe, Save, ArrowLeft, Trash2, CreditCard, Bell, Zap, Key, RefreshCw, CheckCircle2, XCircle, AlertTriangle, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import { db } from '../../firebase';
 import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 
 export function Settings() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, logout } = useAuth();
   const { currency, setCurrency } = useCurrency();
   const { keys, updateKeyStatus } = useKeys();
   const navigate = useNavigate();
@@ -166,9 +166,7 @@ export function Settings() {
              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Configuration Console</p>
           </div>
 
-          <div className="w-24 flex justify-end">
-             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-          </div>
+          <div className="w-24 flex justify-end" />
         </div>
       </nav>
 
@@ -199,15 +197,25 @@ export function Settings() {
               <p className="text-sm text-slate-500 font-medium mt-1">{user?.email}</p>
             </div>
 
-            <div className="flex flex-row gap-3 md:gap-4 w-full md:w-auto justify-center">
-               <div className="flex-1 md:flex-none px-4 md:px-6 py-3 md:py-4 bg-slate-50 border border-slate-100 rounded-2xl md:rounded-3xl text-center">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
-                  <p className="text-[11px] md:text-sm font-bold text-slate-900">Active Node</p>
+            <div className="flex flex-col gap-3 w-full md:w-auto justify-center">
+               <div className="flex gap-3">
+                 <div className="flex-1 md:flex-none px-4 md:px-6 py-3 md:py-4 bg-slate-50 border border-slate-100 rounded-2xl md:rounded-3xl text-center">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                    <p className="text-[11px] md:text-sm font-bold text-slate-900">Active Node</p>
+                 </div>
+                 <div className="flex-1 md:flex-none px-4 md:px-6 py-3 md:py-4 bg-slate-50 border border-slate-100 rounded-2xl md:rounded-3xl text-center">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Tier</p>
+                    <p className="text-[11px] md:text-sm font-bold text-indigo-600">Enterprise</p>
+                 </div>
                </div>
-               <div className="flex-1 md:flex-none px-4 md:px-6 py-3 md:py-4 bg-slate-50 border border-slate-100 rounded-2xl md:rounded-3xl text-center">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Tier</p>
-                  <p className="text-[11px] md:text-sm font-bold text-indigo-600">Enterprise</p>
-               </div>
+               
+               <button 
+                 onClick={() => logout()}
+                 className="w-full py-4 bg-red text-white font-black text-[10px] uppercase tracking-[2px] rounded-2xl hover:bg-black transition-all flex items-center justify-center gap-3 border-none cursor-pointer"
+               >
+                 <LogOut size={14} />
+                 Terminate Session
+               </button>
             </div>
           </div>
         </section>
